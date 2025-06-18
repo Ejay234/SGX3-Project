@@ -55,6 +55,15 @@ def describe():
     describe = traffic_df.describe().to_dict(orient="index")
     return jsonify(describe)
 
+@app.route("/unique")
+def unique():
+    global traffic_df
+    column = request.args.get("column")
+    if column not in traffic_df.columns:
+        return jsonify({"error": f"Column '{column}' not found"}), 400
+    values = traffic_df[column].dropna().unique().tolist()
+    return jsonify({column: values})
+
 if __name__ == "__main__":
     load_traffic_data()
     app.run(debug=True, host='0.0.0.0', port=8042)
