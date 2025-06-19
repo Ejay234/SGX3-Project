@@ -101,6 +101,38 @@ def incidents():
 
     return jsonify(filter_df.to_dict(orient="records"))
 
+@app.route("/hour")
+def hour():
+    global traffic_df
+
+    # Get hour parameters
+    start = request.args.get("start")
+    end = request.args.get("end")
+
+    # Validate the parameters
+    if start is None or end is None:
+        return jsonify({"error": "Missing parameters"})
+
+    try:
+        start = int(start)
+        end = int(end)
+        if not (0 <= start <= 23) and ( 0 < = end <= 23):
+            raise ValueError
+    except:
+        return jsonify({"error": "Hours must be between 0 and 23"})
+
+    # Ensure there is a datetime column
+    if "Published Date" not in traffic_df.columns:
+        return jsonify({"error": "No date column established in the dataframe"}), 400
+
+    # Ensures the date is in a datetime frame
+    if not pd.api.types.is_datetime64_any_dtype(traffic_df["Published Date"]):
+        traffic_df["Hour"] = pd.to_datetime(traffic_df["Published Date"]).apply(lambda x: x.hour)
+
+    # Create the givendataframe to showcase in the route
+    filter_df = traffic_df["Hour"].between(start, end)
+
+    return jsonify({filter_df.to_dict(orient="records"))
 
 if __name__ == "__main__":
     load_traffic_data()
