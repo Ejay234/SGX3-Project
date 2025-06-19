@@ -89,12 +89,14 @@ def incidents():
     if "Published Date" not in traffic_df.columns:
         return jsonify({"error": "No date column established in the dataframe"}), 400
 
+    # Ensures the date is in a datetime frame
     if not pd.api.types.is_datetime64_any_dtype(traffic_df["Published Date"]):
         traffic_df["Year"] = pd.to_datetime(traffic_df["Published Date"]).apply(lambda x: x.year)
 
+    # Create the givendataframe to showcase in the route
     filter_df = traffic_df[
             (traffic_df[column] == value) &
-            traffic_df["Year"].dt.year == year)
+            (traffic_df["Year"] == year)
     ]
 
     return jsonify(filter_df.to_dict(orient="records"))
