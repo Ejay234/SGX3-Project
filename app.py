@@ -64,6 +64,42 @@ def unique():
     values = traffic_df[column].dropna().unique().tolist()
     return jsonify({column: values})
 
+@app.route("/incidents")
+def incidents():
+    global traffic_df
+    column = request.args.get("column")
+    value = request.args.get("value")
+    year = request.args.get("year")
+
+    # Check if all inquirys exists
+    if not column or not value or not year:
+        return jsonify({"Error": "Missing parameters"}), 400
+
+    # Check if column exists
+    if column not in traffic_df.columns:
+        return jsonify({"Error": f"Column '{column}' not found."}), 400
+
+    # Check if year is an integer
+    try:
+        year = int(year)
+    except ValueError:
+        return jsonify({"Error": "Year must be an integer"}), 400
+    
+    # Ensure there is a datetime column
+    if "Published Date" not in traffic_df.columns:
+        return jsonify({"error": "No date column established in the dataframe"}), 400
+
+    if not pd.api.types.is_datetime64_any_dtype(traffic_df["Published Date"]):
+        traffic_df["Year"] = pd.to_datetime(traffic_df["Published Date"]).apply(lambda x: x.year)
+
+    filter_df = traffic_df[
+            (traffic_df[column] == value) &
+            traffic_df["Year"].dt.year == year)
+    ]
+
+    return jsonify(filter_df.to_dict(orient="records"))
+
+
 if __name__ == "__main__":
     load_traffic_data()
     app.run(debug=True, host='0.0.0.0', port=8042)
