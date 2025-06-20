@@ -11,7 +11,13 @@ def load_traffic_data():
     print("Loading Austin Traffic Data")
 
     traffic_df = pd.read_csv("atxtraffic.csv")
-    print(f"Loaded {len(traffic_df)} rows into memory")
+
+    traffic_df["Published Date"] = pd.to_datetime(traffic_df["Published Date"], errors="coerce")
+
+    traffic_df["Year"] = traffic_df["Published Date"].dt.year
+    traffic_df["Hour"] = traffic_df["Published Date"].dt.hour
+
+    print(f"Loaded and cleaned {len(traffic_df)} rows")
 
 @app.route("/")
 def index():
@@ -132,7 +138,7 @@ def hour():
     # Create the givendataframe to showcase in the route
     filter_df = traffic_df["Hour"].between(start, end)
 
-    return jsonify({filter_df.to_dict(orient="records"))
+    return jsonify(filter_df.to_dict(orient="records"))
 
 @app.route("/nearby")
 def nearby():
