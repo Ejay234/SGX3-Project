@@ -134,6 +134,37 @@ def hour():
 
     return jsonify({filter_df.to_dict(orient="records"))
 
+@app.route("/nearby")
+def nearby():
+    global traffic_df
+
+    # Get latitude and longitude
+    try:
+        lat = float(request.args.get("lat"))
+        lon = float(request.args.get("lon"))
+    except (TypeError, ValueError):
+        return jsonify({"error": "Missing or invalid"})
+
+    if "Latitude" not in traffic_df.columns or "Longitude" not in traffic_df.columns:
+        return jsonify({"Error": "Dataframe does not have columns"})
+
+    # Function to compute distance in kilometers
+    def compute(lat1, lon1, lat2, lon2):
+        R = 6371
+        dlat = math.radians(lat2 - lat1)
+        dlon = math.radians(lon2 - lon1)
+        a = math.sin(dlat / 2)**2 + math.cos(math.radians(lat1)) * \
+            math.cos(math.radians(lat2)) * math.sin(dlon / 2) ** 2
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+        return R * c
+
+    km = traffic_df.apply(lambda row: haversine(lat, long, row["Latitude"], row["Longitude"]), axis=1)
+
+    filter_df = traffic_df[km <= 1]
+
+    return jsonify(filter_df = traffic_df.to_dict(orient="records"))
+    
+
 if __name__ == "__main__":
     load_traffic_data()
     app.run(debug=True, host='0.0.0.0', port=8042)
